@@ -1,6 +1,6 @@
 # Carbon（碳）
 
-Minecraft 1.20.1 / Fabric Loader 0.15+（构建使用 0.16.14，Fabric API 0.92.12+1.20.1） 客户端 GPU 物品模型渲染优化模组，Java 17，LGPL 许可证。
+Minecraft 1.20.1 / Fabric Loader 0.15+（构建使用 0.16.14，Fabric API 0.92.12+1.20.1） 客户端 GPU 物品模型渲染优化模组，Java 17，GPL 许可证。
 
 ![Carbon](branding/mod-cover.svg)
 
