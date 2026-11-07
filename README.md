@@ -42,4 +42,4 @@ Iris / Oculus 访问集中在 `IrisCompatibility`，未向光影模组注入 Mix
 
 ## 验证与构建
 
-使用 Java 17 执行 `gradlew.bat build`，输出 `build/libs/carbon-1.20.1.9-A-fabric.jar`。原 Forge 工程备份在 `forge/` 目录。
+使用 Java 17 执行 `gradlew.bat build`，输出 `build/libs/carbon-1.20.1.9-A-fabric.jar`。
