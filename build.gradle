@@ -1,6 +1,5 @@
 plugins {
-    id 'java-library'
-    id 'net.neoforged.moddev' version '2.0.141'
+    id 'fabric-loom' version '1.7.4'
 }
 
 version = mod_version
@@ -8,27 +7,41 @@ group = 'first.carbon'
 base.archivesName = 'carbon'
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    withSourcesJar()
 }
 
-neoForge {
-    version = '21.1.238'
-    mods {
-        carbon { sourceSet(sourceSets.main) }
-    }
-    runs {
-        client {
-            client()
-            loadedMods = [mods.carbon]
-        }
+loom {
+    mixin {
+        defaultRefmapName = 'carbon.refmap.json'
     }
 }
 
 repositories { mavenCentral() }
 
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.terraformersmc.com/releases/' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    modCompileOnly "com.terraformersmc:modmenu:7.2.2"
+    modCompileOnly "net.fabricmc:sponge-mixin:0.12.5+mixin.0.8.5"
+    annotationProcessor "net.fabricmc:sponge-mixin:0.12.5+mixin.0.8.5"
+    compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
+}
+
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 tasks.withType(ProcessResources).configureEach {
+    filteringCharset = 'UTF-8'
     inputs.property 'version', project.version
-    filesMatching('META-INF/neoforge.mods.toml') { expand(version: project.version) }
+    filesMatching('fabric.mod.json') { expand(version: project.version) }
 }
 tasks.withType(Jar).configureEach { from 'LICENSE' }
+tasks.named('jar', Jar) {
+    manifest.attributes('MixinConfigs': 'carbon.mixins.json')
+}

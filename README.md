@@ -1,18 +1,16 @@
 # Carbon（碳）
 
-客户端 GPU 物品模型渲染优化模组，适用于 Minecraft 1.21.1 / NeoForge 21.1.0 及以上，使用 Java 21，MIT 许可证。
+Minecraft 1.20.1 / Fabric Loader 0.15+（构建使用 0.16.14，Fabric API 0.92.12+1.20.1） 客户端 GPU 物品模型渲染优化模组，Java 17，MIT 许可证。
 
 ![Carbon](branding/mod-cover.svg)
 
-缓存重复物品的模型几何，通过 GPU 实例化合并绘制。默认使用掉落物专用管线，在 GPU 计算自旋、浮动与缩放，并复用未变化的场景记录；普通附魔光效与原版圆形阴影同样参与实例化。
+缓存重复物品的模型几何，通过 GPU 实例化合并绘制。标准 `ItemRenderer.renderModelLists` 提交保留调用者的变换、光照和叠加参数，覆盖掉落物、手持、界面及其他调用标准接口的渲染。特殊投影光效、自定义材质和需排序的半透明模型保留原生处理。
 
-标准 `ItemRenderer.renderModelLists` 提交也可优化，覆盖手持、界面、展示和其他模组调用标准物品模型接口的场景。通用路径保留调用方的姿态、光照与叠加参数。无法保持排序或特殊顶点语义的情况交还原有渲染。
-
-可选物理旋转使用 ItemPhysicLite 的旋转组合顺序，有实际位移时绕模型局部 Y 轴翻滚；平面物品落地立即平放，立体物品保留着地朝向并停止翻滚。每个实体使用固定的微小高度偏移，减轻重叠表面的闪烁。仅影响视觉，不改变实体速度、碰撞或拾取。
+默认启用掉落物专用管线，在 GPU 计算自旋、浮动和缩放，复用静止场景记录；普通附魔光效与地面阴影同样参与实例化。可选物理化沿模型局部轴翻滚，停止后平滑躺平，并加入每个实体固定的微小高度偏移。物理效果仅改变视觉，不修改速度、碰撞或拾取。
 
 ## 配置
 
-配置文件为 `config/carbon-client.toml`，模组配置界面提供中文与英文名称、提示。
+配置文件为 `config/carbon-client.toml`（极简键值格式，与 Forge 版键名一致）。
 
 ```toml
 enabled = true
@@ -23,23 +21,25 @@ cacheUpdateBudgetMs = 2.0
 ```
 
 - `enabled`：优化总开关。
-- `optimizeDroppedItems`：默认启用掉落物专用 GPU 管线；关闭后保留其他模组的掉落物变换，标准模型接口继续参与通用实例化。
-- `physicalDroppedItems`：默认关闭的物理旋转视觉效果，需要开启专用管线。OpenGL 4.3 下缓存静止变换，旧设备使用顶点着色器路径。
-- `skipVisibilityChecks`：默认开启，恢复 0.7 的行为，跳过视锥与遮挡检查，提交距离内的普通掉落物，包括摄像机后的物品；仅转向时复用场景。关闭后恢复完整可见性检查，渲染距离限制始终有效。
-- `cacheUpdateBudgetMs`：过期的掉落物缓存排队分帧更新，每帧默认分配 2 毫秒，可设为 0–20 毫秒，0 表示当帧立即完成。队列完成前继续绘制上一份场景；预算仅限制缓存更新，不限制整帧耗时，单个复杂物品的更新可能超出预算。
+- `optimizeDroppedItems`：默认开启掉落物专用 GPU 管线；关闭后保留原有掉落物变换，通过标准模型提交继续优化。
+- `physicalDroppedItems`：默认关闭，需要开启掉落物专用管线；落地姿态收稳后停止派发变换计算。
+- `skipVisibilityChecks`：专用管线默认跳过遮挡与视锥检查，完整提交距离内的普通掉落物；距离限制始终有效。
+- `cacheUpdateBudgetMs`：每帧缓存更新预算，默认 2 毫秒，可设为 0–20 毫秒，0 表示立即完成；队列完成前绘制旧实例与阴影。单个物品更新可能超预算。
 
-`/carbon enabled false` 关闭优化，`/carbon stats` 查看绘制和缓存统计。升级时替换旧的 Item Model Optimization Jar；新配置尚不存在时会迁移旧客户端配置。
+`/carbon enabled false` 停用优化，`/carbon stats` 查看统计。安装 Mod Menu 后可在模组列表的“配置”按钮打开设置界面。
 
-## 光影兼容
+## 光影
 
-Iris 访问集中在 `IrisCompatibility`，无需向 Iris 类注入 Mixin，也不修改其原生着色器程序。Carbon 保留 Iris 的扩展顶点、材质标识和渲染目标，为自己的绘制构建实例化变体，支持主渲染、光影阴影和管线重载。
+Iris / Oculus 访问集中在 `IrisCompatibility`，未向光影模组注入 Mixin；无法保持原生通道语义时保留原有提交。
 
-已验证 Iris `1.8.14-beta.1+mc1.21.1` 与 Photon `v1.4`。光影的原生阴影由 Iris 管理，特殊通道在需要时保留原生提交。
+## 与 Forge 版的差异
+
+- 配置系统由 Forge ConfigSpec 改为内置轻量读写器，键名与旧配置一致并自动迁移 `item_model_optimization-client.toml`。
+- 事件（资源重载、连接断开、渲染阶段、客户端命令）改用 Fabric API 对应入口；`/carbon config` 打开配置界面（Forge 的模组列表“配置”按钮在 Fabric 上无对应通用机制）。
+- 原版 1.20.1 无 `shouldSpreadItems`/`shouldBob` 开关，掉落物始终按原版散布与浮动。
+- Forge 的 `getRenderPasses`/`getRenderTypes` 扩展点不可用，仅接管标准实体通道的普通模型；`SpriteContents` 原始图像与顶点格式偏移通过 Accessor Mixin 读取。
+- 静止场景复用不再受 Forge `IClientItemExtensions` 影响。
 
 ## 验证与构建
 
-[0.9-A Chloride 兼容性验证](benchmark/chloride-0.9-A/README.md) · [0.8 最终对照成绩](benchmark/final-0.8/README.md) · [0.7 测试报告与游戏截图](BENCHMARK.md) · [更新记录](CHANGELOG.md) · [SVG 封面](branding/mod-cover.svg)
-
-使用 Java 21，执行 `gradlew.bat build`，输出 `build/libs/carbon-1.21.1.9-A.jar`。
-
-0.8 已同步至 [1.20.1 Forge](https://github.com/CHUJIAN-afk/Carbon/tree/1.20.1-forge) 与 [26.1.2 NeoForge](https://github.com/CHUJIAN-afk/Carbon/tree/26.1.2-neoforge)，各分支的构建与实测见 [多版本报告](benchmark/ports-0.8/README.md)。
+使用 Java 17 执行 `gradlew.bat build`，输出 `build/libs/carbon-1.20.1.9-A-fabric.jar`。原 Forge 工程备份在 `forge/` 目录。
