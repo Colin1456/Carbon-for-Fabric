@@ -1,6 +1,9 @@
 # Carbon（碳）
 
-Minecraft 1.20.1 / Fabric Loader 0.15+（构建使用 0.16.14，Fabric API 0.92.12+1.20.1） 客户端 GPU 物品模型渲染优化模组，Java 17，GPL 许可证。
+Minecraft 1.17.1 Fabric 客户端 GPU 物品模型渲染优化模组，Java 16+，MIT 许可证。
+
+- Fabric Loader 0.12+，Fabric API 0.46.x（模组 id 为 `fabric`），Mod Menu 2.x 可选。
+- 构建：Java 17 toolchain + `--release 16`，Loom 1.7.4 官方 Mojang 映射，输出 `carbon-1.17.1.9-A-fabric.jar`。
 
 ![Carbon](branding/mod-cover.svg)
 
@@ -35,11 +38,15 @@ Iris / Oculus 访问集中在 `IrisCompatibility`，未向光影模组注入 Mix
 ## 与 Forge 版的差异
 
 - 配置系统由 Forge ConfigSpec 改为内置轻量读写器，键名与旧配置一致并自动迁移 `item_model_optimization-client.toml`。
-- 事件（资源重载、连接断开、渲染阶段、客户端命令）改用 Fabric API 对应入口；`/carbon config` 打开配置界面（Forge 的模组列表“配置”按钮在 Fabric 上无对应通用机制）。
-- 原版 1.20.1 无 `shouldSpreadItems`/`shouldBob` 开关，掉落物始终按原版散布与浮动。
-- Forge 的 `getRenderPasses`/`getRenderTypes` 扩展点不可用，仅接管标准实体通道的普通模型；`SpriteContents` 原始图像与顶点格式偏移通过 Accessor Mixin 读取。
+- 事件（资源重载、连接断开、渲染阶段、客户端命令）改用 Fabric API 对应入口；`/carbon config` 打开配置界面，安装 Mod Menu 后模组列表“配置”按钮同样可用。
+- 原版 1.17 无 `shouldSpreadItems`/`shouldBob` 开关，掉落物始终按原版散布与浮动。
+- Forge 的 `getRenderPasses`/`getRenderTypes` 扩展点不可用，仅接管标准实体通道的普通模型；图集原始图像与顶点格式偏移通过 Accessor Mixin 读取（1.17 无 `SpriteContents`，用 `TextureAtlasSprite.mainImage`）。
 - 静止场景复用不再受 Forge `IClientItemExtensions` 影响。
+- Fabric API 为 command api v1（无 v2）：直接向 `ClientCommandManager.DISPATCHER` 注册，`/carbon enabled|config|stats` 功能一致，反馈消息单参数。
+- 数学与渲染 API 为 1.17 形态：`com.mojang.math` 矩阵/向量、`BufferBuilder.end()`+`popNextBuffer()`、`ItemTransforms.TransformType`，实例数据以列主序写入对齐 GLSL mat 属性。
+- 实体世界访问用 `Entity.level` 字段、`isOnGround()`；`ItemTags.COMPASS` 不存在，附魔判断按 `Items.COMPASS`/`Items.CLOCK` 枚举比较。
+- 着色器 `FogShape` uniform 保留（默认 0 = 球形雾），1.17 无圆柱雾概念，行为等价。
 
 ## 验证与构建
 
-使用 Java 17 执行 `gradlew.bat build`，输出 `build/libs/carbon-1.20.1.9-A-fabric.jar`。
+使用 Java 17 执行 `gradlew.bat build`，输出 `build/libs/carbon-1.17.1.9-A-fabric.jar`。原 Forge 工程备份在 `forge/` 目录。

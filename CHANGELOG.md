@@ -1,14 +1,13 @@
 # 更新记录
 
-## 1.20.1.9-A-fabric — 2026-11-07
+## 1.17.1.9-A-fabric — 2026-11-08
 
-- 移植至 Fabric：Fabric Loader 0.15+ 与 Fabric API 0.92.12+1.20.1，Loom 1.7.4 构建，Java 17。
-- Mod Menu 集成：模组列表“配置”按钮打开设置界面（Mod Menu 为可选依赖，未安装时功能不受影响）。
-- 配置改为内置轻量读写器，键名与 Forge 版一致，自动迁移旧配置文件；`/carbon config` 提供配置界面。
-- 渲染事件改用 Fabric `WorldRenderEvents`（START/AFTER_ENTITIES/END），资源重载、断线与关停监听改用 Fabric 生命周期 API。
-- 客户端命令改用 Fabric Client Command API v2；`/carbon stats` 输出与 Forge 版一致。
-- 原版 1.20.1 无掉落物散布/浮动开关字段，实例化按原版默认行为处理。
-- Forge 扩展点（getRenderPasses/getRenderTypes/IClientItemExtensions）替换为原版等价检查，新增 SpriteContents、VertexFormat 与 LevelRenderer 视锥的 Accessor Mixin，ItemRenderer.renderModelLists 通过 Invoker 调用。
+- 移植至 Fabric 1.17.1：Fabric Loader 0.12+ 与 Fabric API 0.46.x（依赖声明使用当时模组 id `fabric`），Loom 1.7.4 官方 Mojang 映射构建，Java 17 toolchain + `--release 16`。
+- 数学与渲染 API 适配 1.17：`com.mojang.math` 矩阵/向量/四元数，`BufferBuilder.end()`+`popNextBuffer()`（`Pair<DrawState, ByteBuffer>`），实例数据以列主序（`storeTransposed`）写入与 GLSL mat 属性布局一致，追加平移用 `multiplyWithTranslation`。
+- 实体 API 适配：`Entity.level` 公开字段、`isOnGround()`、`DimensionType.brightness(int)` 替代 1.20 的 `LightTexture.getBrightness`；`ItemTags.COMPASS` 不存在，附魔排除按 `Items.COMPASS`/`Items.CLOCK` 比较。
+- 客户端命令改用 Fabric Client Command API v1，直接向 `ClientCommandManager.DISPATCHER` 注册；`/carbon enabled|config|stats` 与 1.20 版功能一致。
+- 原版 1.17 无 `SpriteContents`，图集图像改由 `TextureAtlasSprite.mainImage` Accessor Mixin 读取；着色器 `FogShape` uniform 保留，默认 0（球形雾）与 1.17 行为等价。
+- Mod Menu 2.x 集成（可选依赖）：模组列表“配置”按钮打开设置界面。
 
 ## 1.20.1.9-A — 2026-11-07
 

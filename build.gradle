@@ -7,8 +7,13 @@ group = 'first.carbon'
 base.archivesName = 'carbon'
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    // 本机只有 Java 17 工具链；编译 release 16 以兼容 MC 1.17.1 的 Java 16 运行时。
     withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 16
 }
 
 loom {
@@ -16,8 +21,6 @@ loom {
         defaultRefmapName = 'carbon.refmap.json'
     }
 }
-
-repositories { mavenCentral() }
 
 repositories {
     mavenCentral()
@@ -29,13 +32,12 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
-    modCompileOnly "com.terraformersmc:modmenu:7.2.2"
+    modCompileOnly "com.terraformersmc:modmenu:2.0.17"
     modCompileOnly "net.fabricmc:sponge-mixin:0.12.5+mixin.0.8.5"
     annotationProcessor "net.fabricmc:sponge-mixin:0.12.5+mixin.0.8.5"
     compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
 }
 
-tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 tasks.withType(ProcessResources).configureEach {
     filteringCharset = 'UTF-8'
     inputs.property 'version', project.version
